@@ -3,9 +3,17 @@ import json
 import os
 import sys
 import sqlite3
+import signal
 
-json_file = os.open("game.json", os.O_APPEND | os.O_RDWR | os.O_CREAT)
+def exit_func(sig, frame):
+    try :
+        os.remove("game.json")
+    except:
+        pass
+    sys.exit(0)
 
+signal.signal(signal.SIGINT, exit_func)
+signal.signal(signal.SIGTERM, exit_func)
 
 print("warning : this script will overwrite the settings.db file, please make a backup of these files before continuing")
 print("also for this to work, close completely logitech g hub")
@@ -25,12 +33,17 @@ query = "SELECT file FROM data"
 cursor.execute(query)
 data = cursor.fetchall()
 
+
+json_file = os.open("game.json", os.O_APPEND | os.O_RDWR | os.O_CREAT)
+
 data = data[0][0].split(b"\n")
 for i in data:
     try :
         os.write(json_file, i + b"\n")
     except:
         print("error while writing to file")
+        os.close(json_file)
+        os.remove("game.json")
         sys.exit(1)
 
 os.close(json_file)
